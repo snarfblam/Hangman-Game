@@ -1,0 +1,70 @@
+body {
+    background: black;
+    color: white;
+    padding: .3em;
+    font-family: "Press Start 2P";
+    text-transform: uppercase;
+}
+
+p {
+    padding-bottom: 1em;
+}
+
+#logo {
+    margin: 16px auto;
+    display: block;
+}
+
+#subtitle {
+    text-align: center;
+    font-size: 32px;
+}
+
+header {
+    padding: 32px;
+    border: 4px solid white;
+    margin: 32px auto;
+    width: 600px;
+    background: #800;
+    position: relative;
+}
+
+.rivet {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    box-shadow: 4px 4px 0 black;
+}
+
+.game-container {
+    display: flex;
+    justify-content: space-between;
+    width: 800px;
+    margin: 0 auto;
+}
+
+.game-item {
+    width: 42%;
+    /* box-sizing: border-box; */
+    border: 4px white solid;
+    outline: 2px black solid;
+    padding: 20px;
+    /* outline-offset: 1px; */
+}
+
+.rivet1, .rivet3 {
+    left: 20px
+}
+
+.rivet1, .rivet2 {
+    top: 20px;
+}
+
+.rivet3, .rivet4 {
+    bottom: 20px;
+}
+
+.rivet2, .rivet4 {
+    right: 20px;
+}

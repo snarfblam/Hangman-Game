@@ -30,46 +30,41 @@
         </header>
         
         <div class="game-container">
-            <div class="game-item">
-                <p>Are you a bad enough dude to not get hanged?<p>
-                <img src="assets/images/hangman-a.gif">
+            <div class="game-pane" id="player-pane">
+                <div class="player-container">
+                    <div class="player-box player-one" id="img-player"></div>
+                    <p id="versus">vs.</p>
+                    <div class="player-box player-two" id="img-opponent"></div>
+                </div>
+
+                <img src="assets/images/hangman-a.gif" id="hangman">
             </div>
-            <div class="game-item">
-                <p>Press a key to make a guess!</p>
+            <div class="game-pane">
+                <h3 class="pane-header">Press a key to make a guess!</h3>
+
                 <p>
-                    Wins: <span id="winDisplay">0</span>.
+                    HEALTH  
+                    <div id="health-bar"></div>
                     <br><br>
                 </p>
                 <p>
-                    Current word:
-                    <br>
-                    <span id="wordDisplay">_________</span>
+                    Score: <span id="score-display">0</span>
                     <br><br>
-                </p>
-                <p>
-                    Lives: 
-                    <span id="livesDisplay">13</span>
-                    <br><br>
-                </p>
-                <p>
+                </p>                <p>
                     Guesses:<br>
-                    <span id="guessDisplay"></span>
+                    <span id="guess-display"></span>
+                    <br><br><br>
                 </p>
+                <p class="word-container">
+                        Current word:
+                        <br>
+                        <span id="word-display">_________</span>
+                        <br><br>
+                </p>    
             </div>
         </div>
         
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
-        <script type="text/javascript">
-            function autorun()
-            {
-                
-            }
-            
-            if (document.addEventListener) 
-                document.addEventListener("DOMContentLoaded", autorun, false);
-            else if (document.attachEvent) 
-                document.attachEvent("onreadystatechange", autorun);
-            else window.onload = autorun;
-        </script>
+        <script src="assets/javascript/game.js" type="text/javascript"></script>
     </body>
 </html>

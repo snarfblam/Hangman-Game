@@ -257,6 +257,7 @@ not$(document).ready(function() {
             score: 0,
             isWinning: false,
             isLosing: false,
+            healthImageUrl: "",
 
             /** @typedef {Object} themeImage
              *  @property {"player" | "opponent"} target - Which image will be updated
@@ -274,6 +275,7 @@ not$(document).ready(function() {
              *  @property {string} losingSound - Sound associated with losingClass
              *  @property {string} wrongSound - Sound associated with a wrong guess
              *  @property {string[]} wordList - List of theme-specific words available
+             *  @property {string} tweak - Cues the game to make minor adjustments for the theme: "meter tweak" = +2 px for health meter
              */
             /** @type {themeType} */ 
             currentTheme: null, 
@@ -371,6 +373,7 @@ not$(document).ready(function() {
                 this.isWinning = this.isLosing = false;
 
                 this.uiPrompt.text(this.prompt_Gameplay);
+                this.sounds.stopAll();
 
                 // If key not specified, don't play a letter
                 if((key || "") === "") {
@@ -433,7 +436,7 @@ not$(document).ready(function() {
                             this.applyThemeImage(this.currentTheme.losingImage);
                             this.sounds.play(this.currentTheme.losingSound);
                         } else {
-                            this.sounds.play(this.currentTheme.wrongSound);
+                            this.sounds.play(this.currentTheme.wrongSound, false);
                         }
 
                         if(this.guessesLeft == 0){
@@ -450,9 +453,13 @@ not$(document).ready(function() {
             },
 
             updateHealthBar: function() {
+                var meterTweak = 0;
+                if(this.currentTheme && this.currentTheme.tweak == "meter tweak") meterTweak = 2;
                 this.uiHealthBar.attr("style", 
-                    "width: " + this.guessesLeft * this.heartWidth + "px; " +
-                    "height: " + this.heartHeight + "px;");
+                    "width: " + (this.guessesLeft * this.heartWidth + meterTweak) + "px; " +
+                    "height: " + this.heartHeight + "px; " +
+                    "background: url(\""+ this.healthImageUrl + "\");"
+                );
             },
 
             updateGuessDisplay: function() {
@@ -537,6 +544,8 @@ not$(document).ready(function() {
                         this.uiPlayerAvatar.attr("src", source);
                     } else if(img.target == "opponent") {
                         this.uiOpponentAvatar.attr("src", source);
+                    } else if(img.target == "health") {
+                        this.healthImageUrl = source;
                     }
                 }
             },
@@ -600,64 +609,98 @@ not$(document).ready(function() {
             "graphics",
             "power-up",
             "Konami code",
-            // "continue",
-            // "password",
-            // "cheat code",
-            // "multiplayer",
+             "continue",
+             "password",
+             "cheat code",
+             "multiplayer",
             // "backstory",
-            // "high score",
+             "high score",
             // "speed run",
         ],
 
         themes: [
-            //{ // Mario Theme
-            //    mainClass: "theme-mario",
-            //    winningClass: null,
-            //    winningSound: null,
-            //    losingClass: null,
-            //    losingSound: null,
-            //    winGameClass: null,
-            //    winSound: null,
-            //    loseGameClass: null,
-            //    loseSound: null,
-            //    wrongSound: null,
-            //    wordList: [
-            //        "mushroom",
-            //        "flagpole",
-            //        "flower",
-            //        "warp zone",
-            //        "princess",
-            //        //"castle",
-            //    ],
-            //},
             { // Mario Theme
+                 mainImage: [
+                     {target: "player", source: "avatarMario.png"},
+                     {target: "opponent", source: "avatarBowser.png"},
+                     {target: "health", source: "coin.png"}
+                    ],
+                 winningImage: {target: "player", source: "avatarMario_winning.png"},
+                 winningSound: "mario_winning.mp3",
+                 losingImage: {target: "player", source: "mario_losing.gif"},
+                 losingSound: "mario_losing.mp3",
+                 winGameImage: {target: "opponent", source: "Mario win compiled.gif"},
+                 winSound: "mario_win.mp3",
+                 loseGameImage: {target: "player", source: "mario lose.gif"},
+                 loseSound: "mario_lose.mp3",
+                 wrongSound: "mario_wrong.mp3",
+                 wordList: [
+                     "mushroom",
+                     "flagpole",
+                     "flower",
+                     "warp zone",
+                     "princess",
+                     //"castle",
+                 ],
+             },
+
+             { // Metroid Theme
                 mainImage: [
-                    {target: "player", source: "avatarMario.png"},
-                    {target: "opponent", source: "avatarBowser.png"},
+                    {target: "player", source: "avatarSamus.png"},
+                    {target: "opponent", source: "avatarBrain.gif"},
+                    {target: "health", source: "tank.png"}
                 ],
-                winningImage: {target: "player", source: "avatarMario_winning.png"},
-                winningSound: "mario_winning.mp3",
-                losingImage: {target: "player", source: "mario_losing.gif"},
-                losingSound: "mario_losing.mp3",
-                winGameImage: {target: "opponent", source: "Mario win compiled.gif"},
-                winSound: "mario_win.mp3",
-                loseGameImage: {target: "player", source: "mario lose.gif"},
-                loseSound: "mario_lose.mp3",
-                wrongSound: "mario_wrong.mp3",
+                winningImage: {target: "player", source: "avatarSamus_winning.png"},
+                winningSound: "metroid_winning.mp3",
+                losingImage: {target: "opponent", source: "avatarBrain_losing.gif"},
+                losingSound: "metroid_losing.mp3",
+                winGameImage: {target: "opponent", source: "avatarBrain_win.gif"},
+                winSound: "metroid_win.mp3",
+                loseGameImage: {target: "player", source: "samus_lose.gif"},
+                loseSound: "metroid_lose.mp3",
+                wrongSound: "metroid_wrong.mp3",
                 wordList: [
-                    "mushroom",
-                    "flagpole",
-                    "flower",
-                    "warp zone",
-                    "princess",
+                    "missile",
+                    "energy tank",
+                    "pirate",
+                    "secret world",
+                    "time bomb",
                     //"castle",
                 ],
+                tweak: "",
             },
 
+            { // Blaster Master Theme
+                mainImage: [
+                    {target: "player", source: "avatarTank.png"},
+                    {target: "opponent", source: "avatarThing.gif"},
+                    {target: "health", source: "meter.png"}
+                ],
+                winningImage: {target: "player", source: "avatarTank_winning.gif"},
+                winningSound: "blast_winning.mp3",
+                losingImage: {target: "opponent", source: "avatarThing_losing.gif"},
+                losingSound: "blast_losing.mp3",
+                winGameImage: {target: "opponent", source: "avatarThing_win.gif"},
+                winSound: "blast_win.mp3",
+                loseGameImage: {target: "player", source: "avatarTank_die.gif"},
+                loseSound: "blast_lose.mp3",
+                wrongSound: "blast_wrong.mp3",
+                wordList: [
+                    "crusher",
+                    "plutonium",
+                    "ribbit",
+                    "underground",
+                    "thunder",
+                    //"castle",
+                ],
+                tweak: "meter tweak",
+            },
+      
             { // Zelda Theme
                 mainImage: [
                     {target: "player", source: "avatarLink.png"},
                     {target: "opponent", source: "avatarGanon.png"},
+                    {target: "health", source: "heart.png"}
                 ],
                 winningImage: {target: "player", source: "avatarLink_winning.png"},
                 winningSound: "zelda_winning.mp3",
@@ -679,13 +722,18 @@ not$(document).ready(function() {
                     "candle",
                     //"dungeon",
                 ],
+                tweak: "",
             },
         ],
 
         initSounds: function() {
             var that = this;
 
-            this.sounds.play = function(name){
+            this.sounds.play = function(name, stopAll){
+                if(stopAll !== false) { // don't stop if parameter is omitted
+                    that.sounds.stopAll();
+                }
+
                 var data = that.sounds[name];
                 if(data.name == null) return;
 
@@ -699,6 +747,14 @@ not$(document).ready(function() {
                     data.sound = new Audio(data.url);
                     data.sound.play();
                 } 
+            }
+
+            this.sounds.stopAll = function() {
+                that.sounds.forEach(function(snd) {
+                    if(snd.sound) {
+                        snd.sound.pause();
+                    }
+                });
             }
 
             this.themes.forEach(function(t) {

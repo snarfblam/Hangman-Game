@@ -334,9 +334,13 @@ not$(document).ready(function() {
              */
             keyHandler: function(e) {
                 var key = e.key;
-                if(key == "Spacebar") key = " "; // call the same thing different things for maximum confusion!
+                // Because simple things can't be simple...
+                if(key == "Spacebar") key = " "; 
+                if(key.toUpperCase().indexOf("MOZ") >= 0) {
+                    key = String.fromCharCode(e.keyCode).toLowerCase();
+                }
 
-                var isLetterKey = HangmanGame.regexLetterKey.test(e.key);
+                var isLetterKey = HangmanGame.regexLetterKey.test(key);
 
                 switch(HangmanGame.currentGameState) {
                     case HangmanState.uninitialized:
@@ -369,7 +373,7 @@ not$(document).ready(function() {
                 this.uiPrompt.text(this.prompt_Gameplay);
 
                 // If key not specified, don't play a letter
-                if(key || "" === "") {
+                if((key || "") === "") {
                     this.updateWordDisplay();
                 } else {
                     this.playLetter(key);
@@ -626,36 +630,54 @@ not$(document).ready(function() {
             //        //"castle",
             //    ],
             //},
+            { // Mario Theme
+                mainImage: [
+                    {target: "player", source: "avatarMario.png"},
+                    {target: "opponent", source: "avatarBowser.png"},
+                ],
+                winningImage: {target: "player", source: "avatarMario_winning.png"},
+                winningSound: "mario_winning.mp3",
+                losingImage: {target: "player", source: "mario_losing.gif"},
+                losingSound: "mario_losing.mp3",
+                winGameImage: {target: "opponent", source: "Mario win compiled.gif"},
+                winSound: "mario_win.mp3",
+                loseGameImage: {target: "player", source: "mario lose.gif"},
+                loseSound: "mario_lose.mp3",
+                wrongSound: "mario_wrong.mp3",
+                wordList: [
+                    "mushroom",
+                    "flagpole",
+                    "flower",
+                    "warp zone",
+                    "princess",
+                    //"castle",
+                ],
+            },
 
             { // Zelda Theme
-                //mainClass: "theme-zelda",
                 mainImage: [
                     {target: "player", source: "avatarLink.png"},
                     {target: "opponent", source: "avatarGanon.png"},
                 ],
-                //winningClass: "theme-zelda-winning",
                 winningImage: {target: "player", source: "avatarLink_winning.png"},
-                winningSound: "zelda_winning.wav",
-                //losingClass: "theme-zelda-losing",
+                winningSound: "zelda_winning.mp3",
                 losingImage: {target: "opponent", source: "avatarGanon_losing.gif"},
-                losingSound: "zelda_losing.wav",
-                //winGameClass: "theme-zelda-win",
+                losingSound: "zelda_losing.mp3",
                 winGameImage: [
                     {target: "player", source: "avatarLink_winning.gif"},
                     {target: "opponent", source: "avatarGanon_win.png"}
                     ],
-                winSound: "zelda_win.wav",
-                //loseGameClass: "theme-zelda-lose",
+                winSound: "zelda_win.mp3",
                 loseGameImage: {target: "player", source: "avatarLink_lose.gif"},
-                loseSound: "zelda_lose.wav",
-                wrongSound: "zelda_wrong.wav",
+                loseSound: "zelda_lose.mp3",
+                wrongSound: "zelda_wrong.mp3",
                 wordList: [
                     "triforce",
                     "boomrang",
                     "compass",
                     "magic wand",
                     "candle",
-                    //"dungeion",
+                    //"dungeon",
                 ],
             },
         ],

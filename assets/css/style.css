@@ -137,32 +137,32 @@ header {
 
 
 #player-pane.theme-mario #img-player {
-    content: url("../images/avatarMario.png");
+    background: url("../images/avatarMario.png");
 }
 
 #player-pane.theme-mario #img-opponent {
-    content: url("../images/avatarBowser.png");
+    background: url("../images/avatarBowser.png");
 }
 
 
 #player-pane.theme-zelda #img-player {
-    content: url("../images/avatarLink.png");
+    background: url("../images/avatarLink.png");
 }
 #player-pane.theme-zelda #img-opponent {
-    content: url("../images/avatarGanon.png");
+    background: url("../images/avatarGanon.png");
 }
 #player-pane.theme-zelda-winning #img-player {
-    content: url("../images/avatarLink_winning.png");
+    background: url("../images/avatarLink_winning.png");
 }
 #player-pane.theme-zelda-losing #img-opponent {
-    content: url("../images/avatarGanon_losing.gif");
+    background: url("../images/avatarGanon_losing.gif");
 }
 #player-pane.theme-zelda-lose #img-player {
-    content: url("../images/avatarLink_lose.gif");
+    background: url("../images/avatarLink_lose.gif");
 }
 #player-pane.theme-zelda-win #img-player {
-    content: url("../images/avatarLink_winning.gif");
+    background: url("../images/avatarLink_winning.gif");
 }
 #player-pane.theme-zelda-win #img-opponent {
-    content: url("../images/avatarGanon_win.png");
+    background: url("../images/avatarGanon_win.png");
 }

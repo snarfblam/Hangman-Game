@@ -234,6 +234,8 @@ not$(document).ready(function() {
 
             this.uiPrompt.text(this.prompt_BeforeStart);
             this.updateHealthBar();
+
+            this.initSounds();
         },
 
 
@@ -256,12 +258,21 @@ not$(document).ready(function() {
             isWinning: false,
             isLosing: false,
 
+            /** @typedef {Object} themeImage
+             *  @property {"player" | "opponent"} target - Which image will be updated
+             *  @property {string} source - url of image
+             */
             /** @typedef {Object} themeType - creates a new type named 'SpecialType'
-             *  @property {string} mainClass - The class to apply to #player-pane element
-             *  @property {string} losingClass - Stacks on mainClass - Player is close to losing
-             *  @property {string} winningClass - Stacks on mainClass - Player is close to winning
-             *  @property {string} winGameClass - Stacks on mainClass/winningClass/losingClass - Player has won
-             *  @property {string} loseGameClass - Stacks on mainClass/winningClass/losingClass - Player has lost
+             *  @property {themeImage} mainImage - The image to apply to #player-pane element
+             *  @property {themeImage} losingImage - Stacks over mainImage - Player is close to losing
+             *  @property {themeImage} winningImage - Stacks over mainImage - Player is close to winning
+             *  @property {themeImage} winGameImage - Stacks over mainImage/winningImage/losingImage - Player has won
+             *  @property {themeImage} loseGameImage - Stacks over mainImage/winningImage/losingImage - Player has lost
+             *  @property {string} winSound - Sound associated with winGameClass
+             *  @property {string} loseSound - Sound associated with loseGameClass
+             *  @property {string} winningSound - Sound associated with winningClass
+             *  @property {string} losingSound - Sound associated with losingClass
+             *  @property {string} wrongSound - Sound associated with a wrong guess
              *  @property {string[]} wordList - List of theme-specific words available
              */
             /** @type {themeType} */ 
@@ -298,6 +309,9 @@ not$(document).ready(function() {
             prompt_WinGame: "You Win! Hit space to play again!",
             prompt_Gameplay: "Press a key to make a guess!",
 
+            soundsPath: "assets/sound/",
+            imagesPath: "assets/images/",
+
             /** The number of remaining guesses when the player is considered near losing */
             nearLosingThreshold: 3,
             /** The number of remaining guesses when the player is considered near winning */
@@ -320,11 +334,13 @@ not$(document).ready(function() {
              */
             keyHandler: function(e) {
                 var key = e.key;
+                if(key == "Spacebar") key = " "; // call the same thing different things for maximum confusion!
+
                 var isLetterKey = HangmanGame.regexLetterKey.test(e.key);
 
                 switch(HangmanGame.currentGameState) {
                     case HangmanState.uninitialized:
-                        if (e.key == " ") {
+                        if (key == " ") {
                             HangmanGame.beginGame(key);
                         }
                         break;
@@ -334,7 +350,7 @@ not$(document).ready(function() {
                         }
                         break;
                     case HangmanState.gameOver:
-                        if (e.key == " ") {
+                        if (key == " ") {
                             HangmanGame.beginGame(key);
                         }
                         break;
@@ -388,7 +404,10 @@ not$(document).ready(function() {
                         missingLetterCount++;
                 }
                 if(!this.isWinning && missingLetterCount <= this.nearWinningThreshold){
-                    this.applyThemeClass(this.currentTheme.winningClass)
+                    this.isWinning = true;
+                    //this.applyThemeClass(this.currentTheme.winningClass);
+                    this.applyThemeImage(this.currentTheme.winningImage);
+                    this.sounds.play(this.currentTheme.winningSound);
                 }
 
                 
@@ -405,7 +424,12 @@ not$(document).ready(function() {
 
                         // Is the player close to losing?
                         if(!this.isLosing && this.guessesLeft <= this.nearLosingThreshold){
-                            this.applyThemeClass(this.currentTheme.losingClass);
+                            this.isLosing = true;
+                            //this.applyThemeClass(this.currentTheme.losingClass);
+                            this.applyThemeImage(this.currentTheme.losingImage);
+                            this.sounds.play(this.currentTheme.losingSound);
+                        } else {
+                            this.sounds.play(this.currentTheme.wrongSound);
                         }
 
                         if(this.guessesLeft == 0){
@@ -427,23 +451,25 @@ not$(document).ready(function() {
                     "height: " + this.heartHeight + "px;");
             },
 
-            updateGuessDisplay() {
+            updateGuessDisplay: function() {
                 this.uiGuessDisplay.text(this.guessedLetters);
             }, 
 
-            updateWordDisplay() {
+            updateWordDisplay: function() {
                 this.uiWordDisplay.text(this.currentWord.displayWord);
                 this.uiHangman.attr("src", this.hangmanImages[this.guessesLeft]);
             },
 
-            updateScoreDisplay() {
+            updateScoreDisplay: function() {
                 this.uiScoreDisplay.text(this.score);
             },
 
             GameOver: function() {
                 this.currentGameState = HangmanState.gameOver;
                 this.uiPrompt.text(this.prompt_GameOver);
-                this.applyThemeClass(this.currentTheme.loseGameClass);
+                //this.applyThemeClass(this.currentTheme.loseGameClass);
+                this.applyThemeImage(this.currentTheme.loseGameImage);
+                this.sounds.play(this.currentTheme.loseSound);
             },
 
             WinGame: function() {
@@ -451,7 +477,9 @@ not$(document).ready(function() {
                 this.score++;
                 this.updateScoreDisplay();
                 this.uiPrompt.text(this.prompt_WinGame);
-                this.applyThemeClass(this.currentTheme.winGameClass);
+                //this.applyThemeClass(this.currentTheme.winGameClass);
+                this.applyThemeImage(this.currentTheme.winGameImage);
+                this.sounds.play(this.currentTheme.winSound);
             },
 
             selectRandomWord: function () {
@@ -482,15 +510,41 @@ not$(document).ready(function() {
                 var randomThemeIndex = this.rnd(HangmanGame.themes.length);
                 this.currentTheme = this.themes[randomThemeIndex];
                 //this.uiPlayerPane.addClass(this.currentTheme.mainClass);
-                this.applyThemeClass(this.currentTheme.mainClass);
+                //this.applyThemeClass(this.currentTheme.mainClass);
+                this.applyThemeImage(this.currentTheme.mainImage);
             },
 
+            /**
+             *  @param {Array | {target: string, source: string}} img
+             */
+            applyThemeImage: function(img) {
+                var that = this;
+
+                if(img.forEach){
+                    // If 'img' is an array, then each element is image info
+                    img.forEach(function(i){
+                        that.applyThemeImage(i);
+                    });
+                } else {
+                    // If 'img' is an object, then it contains image info directly
+                    var source = this.imagesPath + img.source;
+
+                    if(img.target == "player") {
+                        this.uiPlayerAvatar.attr("src", source);
+                    } else if(img.target == "opponent") {
+                        this.uiOpponentAvatar.attr("src", source);
+                    }
+                }
+            },
             applyThemeClass: function(cls) {
                 if(!cls) return;
 
                 if(this.themeClassList.indexOf(cls) < 0){
                     this.themeClassList.push(cls);
                     this.uiPlayerPane.addClass(cls);
+                    //this.uiPlayerPane[0].src = this.uiPlayerPane[0].src;              
+                    var content = window.getComputedStyle(this.uiPlayerAvatar.items[0]).content;
+                    this.uiPlayerAvatar.items[0].src = content.substr(5,content.length - 7); //this.uiPlayerAvatar.items[0].src;
                 }
             },
 
@@ -552,36 +606,109 @@ not$(document).ready(function() {
         ],
 
         themes: [
-            { // Mario Theme
-                mainClass: "theme-mario",
-                winningClass: null,
-                losingClass: null,
-                winGameClass: null,
-                loseGameClass: null,
-                wordList: [
-                    "mushroom",
-                    "flagpole",
-                    "flower",
-                    "warp zone",
-                    "princess",
-                ],
-            },
+            //{ // Mario Theme
+            //    mainClass: "theme-mario",
+            //    winningClass: null,
+            //    winningSound: null,
+            //    losingClass: null,
+            //    losingSound: null,
+            //    winGameClass: null,
+            //    winSound: null,
+            //    loseGameClass: null,
+            //    loseSound: null,
+            //    wrongSound: null,
+            //    wordList: [
+            //        "mushroom",
+            //        "flagpole",
+            //        "flower",
+            //        "warp zone",
+            //        "princess",
+            //        //"castle",
+            //    ],
+            //},
+
             { // Zelda Theme
-                mainClass: "theme-zelda",
-                winningClass: "theme-zelda-winning",
-                losingClass: "theme-zelda-losing",
-                winGameClass: "theme-zelda-win",
-                loseGameClass: "theme-zelda-lose",
+                //mainClass: "theme-zelda",
+                mainImage: [
+                    {target: "player", source: "avatarLink.png"},
+                    {target: "opponent", source: "avatarGanon.png"},
+                ],
+                //winningClass: "theme-zelda-winning",
+                winningImage: {target: "player", source: "avatarLink_winning.png"},
+                winningSound: "zelda_winning.wav",
+                //losingClass: "theme-zelda-losing",
+                losingImage: {target: "opponent", source: "avatarGanon_losing.gif"},
+                losingSound: "zelda_losing.wav",
+                //winGameClass: "theme-zelda-win",
+                winGameImage: [
+                    {target: "player", source: "avatarLink_winning.gif"},
+                    {target: "opponent", source: "avatarGanon_win.png"}
+                    ],
+                winSound: "zelda_win.wav",
+                //loseGameClass: "theme-zelda-lose",
+                loseGameImage: {target: "player", source: "avatarLink_lose.gif"},
+                loseSound: "zelda_lose.wav",
+                wrongSound: "zelda_wrong.wav",
                 wordList: [
                     "triforce",
                     "boomrang",
                     "compass",
                     "magic wand",
                     "candle",
+                    //"dungeion",
                 ],
             },
         ],
+
+        initSounds: function() {
+            var that = this;
+
+            this.sounds.play = function(name){
+                var data = that.sounds[name];
+                if(data.name == null) return;
+
+                if(data.sound) {
+                    var loaded = !isNaN(data.sound.duration);
+                    if(loaded) {
+                        data.sound.currentTime = 0;
+                        data.sound.play();
+                    }
+                } else {
+                    data.sound = new Audio(data.url);
+                    data.sound.play();
+                } 
+            }
+
+            this.themes.forEach(function(t) {
+                prepSound(t.winningSound);
+                prepSound(t.winSound);
+                prepSound(t.wrongSound);
+                prepSound(t.losingSound);
+                prepSound(t.loseSound);
+            });
+
+            function prepSound(path){
+                var fullishPath = that.soundsPath + path;
+                var soundData = {
+                    name: path,
+                    url: fullishPath,
+                    sound: null,
+                };
+                that.sounds.push(soundData);
+                that.sounds[path] = soundData;
+            }
+        },
+        
+        /** @type {{name: string, url: string, sound: HTMLAudioElement}[]} 
+         *  @property {function} play - Plays the specified sound
+        */
+        sounds: [
+           
+        ],
+
+
     };
+    
 
     HangmanGame = game;
     HangmanGame.InitGame();

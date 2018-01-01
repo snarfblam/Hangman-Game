@@ -148,7 +148,21 @@ header {
 #player-pane.theme-zelda #img-player {
     content: url("../images/avatarLink.png");
 }
-
 #player-pane.theme-zelda #img-opponent {
     content: url("../images/avatarGanon.png");
+}
+#player-pane.theme-zelda-winning #img-player {
+    content: url("../images/avatarLink_winning.png");
+}
+#player-pane.theme-zelda-losing #img-opponent {
+    content: url("../images/avatarGanon_losing.gif");
+}
+#player-pane.theme-zelda-lose #img-player {
+    content: url("../images/avatarLink_lose.gif");
+}
+#player-pane.theme-zelda-win #img-player {
+    content: url("../images/avatarLink_winning.gif");
+}
+#player-pane.theme-zelda-win #img-opponent {
+    content: url("../images/avatarGanon_win.png");
 }

@@ -23,7 +23,8 @@
     * @prop {Function} html - Gets/sets html (innerHTML) of captured elements
     * @prop {Function} attr - Gets/sets the specified attributes of captured elements
     * @prop {Function} ready - Accepts a function to be run when the DOM is loaded. Applicable only do document object (i.e. not$(document).ready(function here))
-    * @prop {Function} addClass - Adds the specified class to the captured elements if they don't already have it
+    * @prop {Function} addClass - Adds the specified class(es) to the captured elements if they don't already have it
+    * @prop {Function} removeClass - Removes the specified class(es) to the captured elements if they don't already have it
     */
 
     window.addEventListener("DOMContentLoaded", function() {
@@ -108,17 +109,25 @@
         not$.Not$Object.prototype["addClass"] = function(a,b) {
             return this.getOrSet(arguments, 
                 null,
-                function(e, cls) {
-                    var classes = e.getAttribute("class") || "";
-                    var classList = classes.split(" ");
-                    var containsCls = false;
-                    classList.forEach(function(classListItem) { 
-                        if(classListItem == cls) containsCls = true;
-                    });
+                function(e, newCls) {
+                    var classesAdded = false;
+                    var currentClasses = e.getAttribute("class") || "";
+                    var currentClassList = currentClasses.split(" ");
 
-                    if(!containsCls) {
-                        classList.push(cls);
-                        e.setAttribute("class", classList.join(" "));
+                    var newClassList = newCls.split(" ");
+                    newClassList.forEach(function(cls) {
+                        var containsCls = false;
+                        currentClassList.forEach(function(classListItem) { 
+                            if(classListItem == cls) containsCls = true;
+                        });
+
+                        if(!containsCls) {
+                            currentClassList.push(cls);
+                            classesAdded = true;
+                        }
+                    });
+                    if(classesAdded) {
+                        e.setAttribute("class", currentClassList.join(" "));
                     }
                 }
             );
@@ -128,13 +137,22 @@
         not$.Not$Object.prototype["removeClass"] = function(a,b) {
             return this.getOrSet(arguments, 
                 null,
-                function(e, cls) {
-                    var classes = e.getAttribute("class") || "";
-                    var classList = classes.split(" ");
-                    var index = classList.indexOf(cls);
-                    if(index >= 0) {
-                        classList.splice(index, 1);
-                        e.setAttribute("class", classList.join(" "));
+                function(e, remCls) {
+                    var classesRemoved = false;
+                    var currentClasses = e.getAttribute("class") || "";
+                    var currentClassList = currentClasses.split(" ");
+
+                    var remClassList = remCls.split(" ");
+                    remClassList.forEach(function(cls) {
+                        var index = currentClassList.indexOf(cls);
+                        if(index >= 0) {
+                            currentClassList.splice(index, 1);
+                            classesRemoved = true;
+                        }
+                    });
+
+                    if(classesRemoved){
+                        e.setAttribute("class", currentClassList.join(" "));
                     }
                 }
             );
@@ -235,14 +253,20 @@ not$(document).ready(function() {
             guessesLeft: 0,
             guessedLetters: "",
             score: 0,
+            isWinning: false,
+            isLosing: false,
 
             /** @typedef {Object} themeType - creates a new type named 'SpecialType'
              *  @property {string} mainClass - The class to apply to #player-pane element
+             *  @property {string} losingClass - Stacks on mainClass - Player is close to losing
+             *  @property {string} winningClass - Stacks on mainClass - Player is close to winning
+             *  @property {string} winGameClass - Stacks on mainClass/winningClass/losingClass - Player has won
+             *  @property {string} loseGameClass - Stacks on mainClass/winningClass/losingClass - Player has lost
              *  @property {string[]} wordList - List of theme-specific words available
              */
             /** @type {themeType} */ 
             currentTheme: null, 
-
+            themeClassList: [],
 
         // ---------------------
         // UI
@@ -273,6 +297,11 @@ not$(document).ready(function() {
             prompt_GameOver: "You Lost! Hit space to try again!",
             prompt_WinGame: "You Win! Hit space to play again!",
             prompt_Gameplay: "Press a key to make a guess!",
+
+            /** The number of remaining guesses when the player is considered near losing */
+            nearLosingThreshold: 3,
+            /** The number of remaining guesses when the player is considered near winning */
+            nearWinningThreshold: 2,
 
         // ---------------------
         // Functions
@@ -319,6 +348,7 @@ not$(document).ready(function() {
                 this.guessedLetters = " ";
                 this.updateGuessDisplay();
                 this.updateHealthBar();
+                this.isWinning = this.isLosing = false;
 
                 this.uiPrompt.text(this.prompt_Gameplay);
 
@@ -351,14 +381,32 @@ not$(document).ready(function() {
                     found = found || isMatch;
                 }
 
+                // Find total guessed letter count
+                var missingLetterCount = 0;
+                for (var i = 0; i < this.currentWord.displayWord.length; i++) {
+                    if(this.currentWord.displayWord.charAt(i) == "_")
+                        missingLetterCount++;
+                }
+                if(!this.isWinning && missingLetterCount <= this.nearWinningThreshold){
+                    this.applyThemeClass(this.currentTheme.winningClass)
+                }
+
+                
+
                 if(!found) {
                     var alreadyGuessed = this.guessedLetters.indexOf(letter) >= 0;
                     if(!alreadyGuessed) {
                         this.guessesLeft--;
 
+                        // Health and guesses display
                         this.guessedLetters += " " + letter;
                         this.updateGuessDisplay();
                         this.updateHealthBar();
+
+                        // Is the player close to losing?
+                        if(!this.isLosing && this.guessesLeft <= this.nearLosingThreshold){
+                            this.applyThemeClass(this.currentTheme.losingClass);
+                        }
 
                         if(this.guessesLeft == 0){
                             this.GameOver();
@@ -395,6 +443,7 @@ not$(document).ready(function() {
             GameOver: function() {
                 this.currentGameState = HangmanState.gameOver;
                 this.uiPrompt.text(this.prompt_GameOver);
+                this.applyThemeClass(this.currentTheme.loseGameClass);
             },
 
             WinGame: function() {
@@ -402,6 +451,7 @@ not$(document).ready(function() {
                 this.score++;
                 this.updateScoreDisplay();
                 this.uiPrompt.text(this.prompt_WinGame);
+                this.applyThemeClass(this.currentTheme.winGameClass);
             },
 
             selectRandomWord: function () {
@@ -417,21 +467,38 @@ not$(document).ready(function() {
             },
 
             selectRandomTheme: function () {
-                var cur = this.currentTheme;
+                //var cur = this.currentTheme;
 
                 
-                if(cur) {
-                    var classList = cur.mainClass;
-                    // Todo: append any other classes (winningClass, losingClass, etc?)
-                    // Todo: is there an array.join? var classList = [cur.MainClass, cur.winningClass, etc].join(" ")
-
-                    this.uiPlayerPane.removeClass(classList);
-                }
-
+                // if(cur) {
+                //     var classList = cur.mainClass;
+                //     // Todo: append any other classes (winningClass, losingClass, etc?)
+                //     // Todo: is there an array.join? var classList = [cur.MainClass, cur.winningClass, etc].join(" ")
+                //     
+                //     this.uiPlayerPane.removeClass(classList);
+                // }
+                this.removeThemeClasses();
             
                 var randomThemeIndex = this.rnd(HangmanGame.themes.length);
                 this.currentTheme = this.themes[randomThemeIndex];
-                this.uiPlayerPane.addClass(this.currentTheme.mainClass);
+                //this.uiPlayerPane.addClass(this.currentTheme.mainClass);
+                this.applyThemeClass(this.currentTheme.mainClass);
+            },
+
+            applyThemeClass: function(cls) {
+                if(!cls) return;
+
+                if(this.themeClassList.indexOf(cls) < 0){
+                    this.themeClassList.push(cls);
+                    this.uiPlayerPane.addClass(cls);
+                }
+            },
+
+            removeThemeClasses: function(){
+                var classes = this.themeClassList.join(" ");
+                this.uiPlayerPane.removeClass(classes);
+
+                this.themeClassList.length = 0;
             },
 
             rnd: function (uBound){
@@ -447,7 +514,7 @@ not$(document).ready(function() {
         hangmanImages: [
             "assets/images/hangman-a.gif",
             "assets/images/hangman-b.gif",
-            "assets/images/hangman-c.gif",
+            //"assets/images/hangman-c.gif",
             "assets/images/hangman-d.gif",
             //"assets/images/hangman-e.gif",
             "assets/images/hangman-f.gif",
@@ -477,12 +544,20 @@ not$(document).ready(function() {
             "Konami code",
             // "continue",
             // "password",
-
+            // "cheat code",
+            // "multiplayer",
+            // "backstory",
+            // "high score",
+            // "speed run",
         ],
 
         themes: [
             { // Mario Theme
                 mainClass: "theme-mario",
+                winningClass: null,
+                losingClass: null,
+                winGameClass: null,
+                loseGameClass: null,
                 wordList: [
                     "mushroom",
                     "flagpole",
@@ -493,6 +568,10 @@ not$(document).ready(function() {
             },
             { // Zelda Theme
                 mainClass: "theme-zelda",
+                winningClass: "theme-zelda-winning",
+                losingClass: "theme-zelda-losing",
+                winGameClass: "theme-zelda-win",
+                loseGameClass: "theme-zelda-lose",
                 wordList: [
                     "triforce",
                     "boomrang",

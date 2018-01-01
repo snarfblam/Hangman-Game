@@ -6,12 +6,20 @@ body {
     text-transform: uppercase;
 }
 
+em {
+    font-style: italic;
+}
+
+strong {
+    font-weight: bold;
+}
+
 p {
     /* padding-bottom: 1em; */
 }
 
 #logo {
-    margin: 16px auto;
+    margin: 0px auto 16px auto;
     display: block;
 }
 
@@ -123,4 +131,24 @@ header {
 
 .rivet2, .rivet4 {
     right: 20px;
+}
+
+
+
+
+#player-pane.theme-mario #img-player {
+    content: url("../images/avatarMario.png");
+}
+
+#player-pane.theme-mario #img-opponent {
+    content: url("../images/avatarBowser.png");
+}
+
+
+#player-pane.theme-zelda #img-player {
+    content: url("../images/avatarLink.png");
+}
+
+#player-pane.theme-zelda #img-opponent {
+    content: url("../images/avatarGanon.png");
 }

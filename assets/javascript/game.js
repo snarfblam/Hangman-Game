@@ -259,6 +259,10 @@ not$(document).ready(function() {
             isLosing: false,
             healthImageUrl: "",
 
+            genericWordPool: [],
+            /** @type {themeType[]} */
+            themePool: [],
+
             /** @typedef {Object} themeImage
              *  @property {"player" | "opponent"} target - Which image will be updated
              *  @property {string} source - url of image
@@ -275,6 +279,7 @@ not$(document).ready(function() {
              *  @property {string} losingSound - Sound associated with losingClass
              *  @property {string} wrongSound - Sound associated with a wrong guess
              *  @property {string[]} wordList - List of theme-specific words available
+             *  @property {string[]} wordPool - List of theme-specific words that have not been used yet
              *  @property {string} tweak - Cues the game to make minor adjustments for the theme: "meter tweak" = +2 px for health meter
              */
             /** @type {themeType} */ 
@@ -497,7 +502,9 @@ not$(document).ready(function() {
                 // 50% chance of using theme-specific word
                 var useThemeWord = this.rnd(2) == 0;
                 var wordList = useThemeWord ? this.currentTheme.wordList : this.genericWords;
-                this.currentWord.fullWord = wordList[this.rnd(wordList.length)];
+                var wordPool = useThemeWord ? this.currentTheme.wordPool : this.genericWordPool;
+
+                this.currentWord.fullWord = this.pullFromPool(wordPool, wordList);
                 this.currentWord.displayWord = this.makeDisplayWord(this.currentWord.fullWord);
             },
 
@@ -505,6 +512,29 @@ not$(document).ready(function() {
                 return word.replace(this.regexMatchAllLetters, "_");
             },
 
+            pullFromPool: function (poolArray, sourceArray) {
+                // Need to re-fill pool when it's empty
+                if(poolArray.length == 0) {
+                    // Add contents of the original list to the pool
+                    sourceArray.forEach(function(i){
+                        poolArray.push(i);
+                    });
+
+                    // Randomize (from last to first element, select and place a random item that has not been placed yet)
+                    for (var i = poolArray.length - 1; i > 0; i--) {
+                        var swapIndex = this.rnd(i - 1);
+                        var temp = poolArray[swapIndex];
+                        poolArray[swapIndex] = poolArray[i];
+                        poolArray[i] = temp;
+                    }
+                }
+
+                // Select a random item, remove it from pool and return it
+                var randIndex = this.rnd(poolArray.length);
+                var result = poolArray[randIndex];
+                poolArray.splice(randIndex, 1);
+                return result;
+            },
             selectRandomTheme: function () {
                 //var cur = this.currentTheme;
 
@@ -516,12 +546,19 @@ not$(document).ready(function() {
                 //     
                 //     this.uiPlayerPane.removeClass(classList);
                 // }
+
+                // if(this.themePool.length == 0) {
+                //     this.themePool = this.themePool.concat(this.themes);
+                //     this.randomize(this.themePool);
+                // }
+                //     
+                // 
+                // var randomThemeIndex = this.rnd(HangmanGame.themePool.length);
+                // this.currentTheme = this.themePool[randomThemeIndex];
+                // this.themePool.splice(randomThemeIndex, 1);
+                this.currentTheme = this.pullFromPool(this.themePool, this.themes);
+
                 this.removeThemeClasses();
-            
-                var randomThemeIndex = this.rnd(HangmanGame.themes.length);
-                this.currentTheme = this.themes[randomThemeIndex];
-                //this.uiPlayerPane.addClass(this.currentTheme.mainClass);
-                //this.applyThemeClass(this.currentTheme.mainClass);
                 this.applyThemeImage(this.currentTheme.mainImage);
             },
 
@@ -618,6 +655,7 @@ not$(document).ready(function() {
             // "speed run",
         ],
 
+
         themes: [
             { // Mario Theme
                  mainImage: [
@@ -642,7 +680,9 @@ not$(document).ready(function() {
                      "princess",
                      //"castle",
                  ],
-             },
+                 wordPool: [],
+                 tweak: "",
+                },
 
              { // Metroid Theme
                 mainImage: [
@@ -667,6 +707,7 @@ not$(document).ready(function() {
                     "time bomb",
                     //"castle",
                 ],
+                wordPool: [],
                 tweak: "",
             },
 
@@ -693,6 +734,7 @@ not$(document).ready(function() {
                     "thunder",
                     //"castle",
                 ],
+                wordPool: [],
                 tweak: "meter tweak",
             },
       
@@ -703,7 +745,7 @@ not$(document).ready(function() {
                     {target: "health", source: "heart.png"}
                 ],
                 winningImage: {target: "player", source: "avatarLink_winning.png"},
-                winningSound: "zelda_winning.mp3",
+                winningSound: "zelda__winning.mp3",
                 losingImage: {target: "opponent", source: "avatarGanon_losing.gif"},
                 losingSound: "zelda_losing.mp3",
                 winGameImage: [
@@ -722,6 +764,7 @@ not$(document).ready(function() {
                     "candle",
                     //"dungeon",
                 ],
+                wordPool: [],
                 tweak: "",
             },
         ],

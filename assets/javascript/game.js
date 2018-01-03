@@ -3,7 +3,7 @@
     /**
      * Enum. Identifies current state of the game.
      */
-    var HangmanState =  {
+    var GameState =  {
         uninitialized: "uninitialized",
         playing: "playing",
         gameOver: "gameOver"
@@ -12,7 +12,7 @@
     var HangmanGame;
 
 // --------------------------------------------------------------- 
-// not$ - Because I already wrote code
+// not$ - It's not jQuery. I wrote it myself.
 // --------------------------------------------------------------- 
     
     /**
@@ -27,9 +27,6 @@
     * @prop {Function} removeClass - Removes the specified class(es) to the captured elements if they don't already have it
     */
 
-    window.addEventListener("DOMContentLoaded", function() {
-        not$.documentReady = true;
-    }, false);
 
 
     /** Capture elements by "#ID" or ".className", or document/html elements
@@ -60,161 +57,181 @@
         }
     }
 
-        /** Tracks whether DOMContentLoaded has already been raised */
-        not$.documentReady = false;
-        /** Adds document ready handler or immediately invokes handler, as appropriate */
-        not$.addReadyHandler = function(handler){
-            // If the DOM is already ready, immediately invoke the handler
-            if(not$.documentReady) {
-                handler();
-            } else {
-                window.addEventListener("DOMContentLoaded", handler)
+    // We track whether or not DOM is already loaded so not$(document).ready can have promise-like behavior
+    window.addEventListener("DOMContentLoaded", function() {
+        not$.documentReady = true;
+    }, false);
+
+    /** Tracks whether DOMContentLoaded has already been raised */
+    not$.documentReady = false;
+
+    /** Adds document ready handler or immediately invokes handler, as appropriate */
+    not$.addReadyHandler = function(handler){
+        // If the DOM is already ready, immediately invoke the handler
+        if(not$.documentReady) {
+            handler();
+        } else {
+            window.addEventListener("DOMContentLoaded", handler)
+        }
+    }
+
+    /** Creates a new not$ object */
+    not$.Not$Object = function(items){
+        this.items = items;
+    }
+
+    // Not$Object prototype
+    not$.Not$Object.prototype = {};
+
+    /** Gets/sets object's text content */
+    not$.Not$Object.prototype["text"] = function(opt_Text) {
+        return this.getOrSet(arguments, 
+            function(e) { return e.textContent; },
+            function(e, txt) {e.textContent = txt;}
+        );
+    };
+
+    /** Gets/sets object's inner HTML */
+    not$.Not$Object.prototype["html"] = function(opt_HTML) {
+        return this.getOrSet(arguments, 
+            function(e) { return e.innerHTML; },
+            function(e, txt) {e.innerHTML = txt;}
+        );
+    };
+
+    /** Gets/sets object's attribute */
+    not$.Not$Object.prototype["attr"] = function(name, opt_Attr) {
+        return this.getOrSetWithName(arguments, 
+            function(e, name) { return e.getAttribute(name) },
+            function(e, name, value) {e.setAttribute(name, value);}
+        );
+    };
+
+    /** Adds the specified class to element(s) if not already present */
+    not$.Not$Object.prototype["addClass"] = function(a,b) {
+        return this.getOrSet(arguments, 
+            null,
+            function(e, newCls) {
+                var classesAdded = false;
+                var currentClasses = e.getAttribute("class") || "";
+                var currentClassList = currentClasses.split(" ");
+
+                // Run the add-a-class logic for each of the spcified classes to be added
+                var newClassList = newCls.split(" ");
+                newClassList.forEach(function(cls) {
+                    // Check whether the element already has this class
+                    var containsCls = false;
+                    currentClassList.forEach(function(classListItem) { 
+                        if(classListItem == cls) containsCls = true;
+                    });
+
+                    // If not, add it to the list
+                    if(!containsCls) {
+                        currentClassList.push(cls);
+                        classesAdded = true;
+                    }
+                });
+
+                // If any classes were added, update the DOM
+                if(classesAdded) {
+                    e.setAttribute("class", currentClassList.join(" "));
+                }
             }
-        }
-        
+        );
+    };
 
-        /** Creates a new not$ object */
-        not$.Not$Object = function(items){
-            this.items = items;
-        }
+    /** Adds the specified class to element(s) if not already present */
+    not$.Not$Object.prototype["removeClass"] = function(a,b) {
+        return this.getOrSet(arguments, 
+            null,
+            function(e, remCls) {
+                var classesRemoved = false;
+                var currentClasses = e.getAttribute("class") || "";
+                var currentClassList = currentClasses.split(" ");
 
-        // Not$Object prototype
-        not$.Not$Object.prototype = {};
-
-        /** Gets/sets object's text content */
-        not$.Not$Object.prototype["text"] = function(opt_Text) {
-            return this.getOrSet(arguments, 
-                function(e) { return e.textContent; },
-                function(e, txt) {e.textContent = txt;}
-            );
-        };
-
-        /** Gets/sets object's inner HTML */
-        not$.Not$Object.prototype["html"] = function(opt_HTML) {
-            return this.getOrSet(arguments, 
-                function(e) { return e.innerHTML; },
-                function(e, txt) {e.innerHTML = txt;}
-            );
-        };
-
-        /** Gets/sets object's attribute */
-        not$.Not$Object.prototype["attr"] = function(name, opt_Attr) {
-            return this.getOrSetWithName(arguments, 
-                function(e, name) { return e.getAttribute(name) },
-                function(e, name, value) {e.setAttribute(name, value);}
-            );
-        };
-
-        /** Adds the specified class to element(s) if not already present */
-        not$.Not$Object.prototype["addClass"] = function(a,b) {
-            return this.getOrSet(arguments, 
-                null,
-                function(e, newCls) {
-                    var classesAdded = false;
-                    var currentClasses = e.getAttribute("class") || "";
-                    var currentClassList = currentClasses.split(" ");
-
-                    var newClassList = newCls.split(" ");
-                    newClassList.forEach(function(cls) {
-                        var containsCls = false;
-                        currentClassList.forEach(function(classListItem) { 
-                            if(classListItem == cls) containsCls = true;
-                        });
-
-                        if(!containsCls) {
-                            currentClassList.push(cls);
-                            classesAdded = true;
-                        }
-                    });
-                    if(classesAdded) {
-                        e.setAttribute("class", currentClassList.join(" "));
+                // Run our remove-a-class logic for each of the specified classes to be removed
+                var remClassList = remCls.split(" ");
+                remClassList.forEach(function(cls) {
+                    // If the element contains the class, yank it from the list
+                    var index = currentClassList.indexOf(cls);
+                    if(index >= 0) {
+                        currentClassList.splice(index, 1);
+                        classesRemoved = true;
                     }
+                });
+
+                // If any classes were removed, update the DOM
+                if(classesRemoved){
+                    e.setAttribute("class", currentClassList.join(" "));
                 }
-            );
-        };
+            }
+        );
+    };
 
-        /** Adds the specified class to element(s) if not already present */
-        not$.Not$Object.prototype["removeClass"] = function(a,b) {
-            return this.getOrSet(arguments, 
-                null,
-                function(e, remCls) {
-                    var classesRemoved = false;
-                    var currentClasses = e.getAttribute("class") || "";
-                    var currentClassList = currentClasses.split(" ");
+    /** Assigns an event handler
+     *  @param {string} evt - Event name
+     *  @param {Function} handler - Event handler
+     */
+    not$.Not$Object.prototype["on"] = function(evt, handler) {
+        this.items.forEach(function(item){
+            item.addEventListener(evt, handler);
+        });
+    }
+    
+    /** Defines getter/setter logic (getter(), setter(value)) 
+     *  @param {Array} args - arguments passed to the invoked getter/setter function
+     *  @param {Function} getter - The function that implements the getter logic
+     *  @param {Function} setter - The function that implements the setter logic
+    */
+    not$.Not$Object.prototype["getOrSet"] = function(args, getter, setter) {
+        // Getter accepts 0 arguments, setter accepts 1 (value to be set)
+        if(args.length == 0){ 
+            // Can't get a value if there is nothing to get a value from.
+            if(!this.items || this.items.length == 0)
+            throw("It isn't a thing");
 
-                    var remClassList = remCls.split(" ");
-                    remClassList.forEach(function(cls) {
-                        var index = currentClassList.indexOf(cls);
-                        if(index >= 0) {
-                            currentClassList.splice(index, 1);
-                            classesRemoved = true;
-                        }
-                    });
-
-                    if(classesRemoved){
-                        e.setAttribute("class", currentClassList.join(" "));
-                    }
-                }
-            );
-        };
-
-        not$.Not$Object.prototype["on"] = function(evt, handler) {
-            this.items.forEach(function(item){
-                item.addEventListener(evt, handler);
+            // Run the getter on the first captured element
+            return getter.call(this, this.items[0]);
+        }else if(args.length == 1 ){ 
+            // Run setter logic on each captured element
+            this.items.forEach(function(item) {
+                setter.call(this, item, args[0]);
             });
+            return this;
+        } else {
+            // There should not be more than one argument.
+            throw "You did a bad. So many things."
         }
-        
+    }
 
-        /** Defines getter/setter logic (getter(), setter(value)) */
-        not$.Not$Object.prototype["getOrSet"] = function(args, getter, setter) {
+    /** Defines getter/setter logic (getter(name), setter(name, value)) */
+    not$.Not$Object.prototype["getOrSetWithName"] = function(args, getter, setter) {
+        if(args.length == 0){
+            // We need the name of the thing to get the value of
+            throw("You did a bad. You didn't even specify one thing.");
+        } else if (args.length == 1){ 
+            // Can't get a value if there is nothing to get it from
             if(!this.items || this.items.length == 0)
                 throw("It isn't a thing");
 
-            if(args.length == 0){ 
-                // Getter (no value specified)
-                if(!getter) throw "A value must be specified."
-                // Operate on first item
-                return getter.call(this, this.items[0]);
-            }else if(args.length == 1 ){ // setter
-                // Setter (value specified)
-                // Set value on each captured element
-                this.items.forEach(function(item) {
-                    setter.call(this, item, args[0]);
-                });
-                return this;
-            } else {
-                throw "You did a bad. Specify the things."
-            }
+            // Get value from first captured element
+            return getter.call(this, this.items[0], args[0]);
+        }else if(args.length == 2 ){ // setter
+            // Set value on each captured element
+            this.items.forEach(function(item) {
+                setter.call(this, item, args[0], args[1]);
+            });
+            return this;
+        } else {
+            // Too many arguments
+            throw "You did a bad. So many things."
         }
+    }
 
-        /** Defines getter/setter logic (getter(name), setter(name, value)) */
-        not$.Not$Object.prototype["getOrSetWithName"] = function(args, getter, setter) {
-            if(!this.items || this.items.length == 0)
-                throw("It isn't a thing");
-
-            if(args.length == 0){
-                throw("You did a bad. You didn't even specify one thing.");
-            } else if (args.length == 1){ 
-                // Getter (no value specified)
-                if(!getter) throw "A value must be specified."
-                // Operate on first item
-                return getter.call(this, this.items[0], args[0]);
-            }else if(args.length == 2 ){ // setter
-                // Setter (value specified)
-                // Set value on each captured element
-                this.items.forEach(function(item) {
-                    setter.call(this, item, args[0], args[1]);
-                });
-                return this;
-            } else {
-                throw "You did a bad. Specify the things."
-            }
-        }
-
-        /** Accepts a function to run when the document is ready */
-        not$.Not$Object.prototype["ready"] = function(handler) {
-            not$.addReadyHandler(handler);
-        }
+    /** Accepts a function to run after the document is ready */
+    not$.Not$Object.prototype["ready"] = function(handler) {
+        not$.addReadyHandler(handler);
+    }
     
 
 
@@ -244,8 +261,8 @@ not$(document).ready(function() {
         // ---------------------
 
             /** @typedef {Object} wordType - creates a new type named 'SpecialType'
-             * @property {string} fullWord - The full word as represented in the word list
-            * @property {string} displayWord - The word, as it is currently displayed. When this matches fullWord, the player has won.
+            *  @property {string} fullWord - The full word as represented in the word list
+            *  @property {string} displayWord - The word, as it is currently displayed. When this matches fullWord, the player has won.
             */
             /** @type {wordType} */
             currentWord: {
@@ -255,12 +272,17 @@ not$(document).ready(function() {
             guessesLeft: 0,
             guessedLetters: "",
             score: 0,
+            /** Set to true when UI has been updated for the 'close-to-winning' state */
             isWinning: false,
+            /** Set to true when UI has been updated for the 'close-to-losing' state */
             isLosing: false,
+            /** Location of image used for the health bar */
             healthImageUrl: "",
 
+            /** List of words available to be played */
             genericWordPool: [],
-            /** @type {themeType[]} */
+            /** List of themes available to be used
+             *  @type {themeType[]} */
             themePool: [],
 
             /** @typedef {Object} themeImage
@@ -282,15 +304,17 @@ not$(document).ready(function() {
              *  @property {string[]} wordPool - List of theme-specific words that have not been used yet
              *  @property {string} tweak - Cues the game to make minor adjustments for the theme: "meter tweak" = +2 px for health meter
              */
-            /** @type {themeType} */ 
+            /** Theme currently being displayed
+             *  @type {themeType} */ 
             currentTheme: null, 
+            /** Contains a list of css classes that have been applied by the current theme, and that will need to be removed when a new theme is used. */
             themeClassList: [],
 
         // ---------------------
         // UI
         // ---------------------
 
-            currentGameState: HangmanState.uninitialized,
+            currentGameState: GameState.uninitialized,
             uiPlayerPane: not$("#player-pane"),
             uiPlayerAvatar: not$("#img-player"),
             uiOpponentAvatar: not$("#img-opponent"),
@@ -306,7 +330,9 @@ not$(document).ready(function() {
         // Constants
         // ---------------------
 
+            /** Matches any single letter */
             regexLetterKey: /\b[a-zA-Z]\b/,
+            /** Matches every letter in a string */
             regexMatchAllLetters: new RegExp("[a-zA-Z]","g"),
             heartWidth: 20,
             heartHeight: 20, 
@@ -328,7 +354,8 @@ not$(document).ready(function() {
         // Functions
         // ---------------------
 
-            /** @param {string[]} imageList Array of images to preload
+            /** Preload hangman images to reduce flicker
+             *  @param {string[]} imageList Array of images to preload
              */
             preloadImages: function(imageList) {
                 for (var i = 0; i < imageList.length; i++) {
@@ -337,12 +364,14 @@ not$(document).ready(function() {
                 }
             },
 
-            /** @param {KeyboardEvent} e Event args
+            /** Handles keyboard events
+             *  @param {KeyboardEvent} e Event args
              */
             keyHandler: function(e) {
                 var key = e.key;
-                // Because simple things can't be simple...
+                // IE support
                 if(key == "Spacebar") key = " "; 
+                // Pale Moon support
                 if(key.toUpperCase().indexOf("MOZ") >= 0) {
                     key = String.fromCharCode(e.keyCode).toLowerCase();
                 }
@@ -350,25 +379,26 @@ not$(document).ready(function() {
                 var isLetterKey = HangmanGame.regexLetterKey.test(key);
 
                 switch(HangmanGame.currentGameState) {
-                    case HangmanState.uninitialized:
+                    case GameState.uninitialized:
                         if (key == " ") {
-                            HangmanGame.beginGame(key);
+                            HangmanGame.beginGame();
                         }
                         break;
-                    case HangmanState.playing:
+                    case GameState.playing:
                         if (isLetterKey) {
                             HangmanGame.playLetter(key);
                         }
                         break;
-                    case HangmanState.gameOver:
+                    case GameState.gameOver:
                         if (key == " ") {
-                            HangmanGame.beginGame(key);
+                            HangmanGame.beginGame();
                         }
                         break;
                 }
             },
 
-            beginGame: function(key) {
+            /** Initializes UI and variables for a new round of hangman */
+            beginGame: function() {
                 this.selectRandomTheme();
                 this.selectRandomWord();
                 this.guessesLeft = this.hangmanImages.length - 1;
@@ -378,16 +408,10 @@ not$(document).ready(function() {
                 this.isWinning = this.isLosing = false;
 
                 this.uiPrompt.text(this.prompt_Gameplay);
-                this.sounds.stopAll();
+                this.sounds.stopAll(); // SHHH!
 
-                // If key not specified, don't play a letter
-                if((key || "") === "") {
-                    this.updateWordDisplay();
-                } else {
-                    this.playLetter(key);
-                }
-
-                this.currentGameState = HangmanState.playing;
+                this.updateWordDisplay();
+                this.currentGameState = GameState.playing;
             },
 
             /** Plays the specified letter and updates the game
@@ -415,16 +439,15 @@ not$(document).ready(function() {
                     if(this.currentWord.displayWord.charAt(i) == "_")
                         missingLetterCount++;
                 }
+                // Update UI for 'close-to-winning' if applicable
                 if(!this.isWinning && missingLetterCount <= this.nearWinningThreshold){
                     this.isWinning = true;
-                    //this.applyThemeClass(this.currentTheme.winningClass);
                     this.applyThemeImage(this.currentTheme.winningImage);
                     this.sounds.play(this.currentTheme.winningSound);
                 }
 
-                
-
-                if(!found) {
+                if(!found) { // Guessed letter was not found...
+                    // Don't ding player if he's already guessed this letter
                     var alreadyGuessed = this.guessedLetters.indexOf(letter) >= 0;
                     if(!alreadyGuessed) {
                         this.guessesLeft--;
@@ -434,13 +457,13 @@ not$(document).ready(function() {
                         this.updateGuessDisplay();
                         this.updateHealthBar();
 
-                        // Is the player close to losing?
+                        // Update UI for 'close-to-losing' if applicable
                         if(!this.isLosing && this.guessesLeft <= this.nearLosingThreshold){
                             this.isLosing = true;
-                            //this.applyThemeClass(this.currentTheme.losingClass);
                             this.applyThemeImage(this.currentTheme.losingImage);
                             this.sounds.play(this.currentTheme.losingSound);
                         } else {
+                            // Otherwise play the normal 'wrong guess' sound
                             this.sounds.play(this.currentTheme.wrongSound, false);
                         }
 
@@ -457,9 +480,12 @@ not$(document).ready(function() {
                 this.updateWordDisplay();
             },
 
+            /** Updates the size of the healthbar to reflect number of chances left */
             updateHealthBar: function() {
+                // Blaster Master theme needs an extra two pixels 
                 var meterTweak = 0;
                 if(this.currentTheme && this.currentTheme.tweak == "meter tweak") meterTweak = 2;
+                
                 this.uiHealthBar.attr("style", 
                     "width: " + (this.guessesLeft * this.heartWidth + meterTweak) + "px; " +
                     "height: " + this.heartHeight + "px; " +
@@ -481,7 +507,7 @@ not$(document).ready(function() {
             },
 
             GameOver: function() {
-                this.currentGameState = HangmanState.gameOver;
+                this.currentGameState = GameState.gameOver;
                 this.uiPrompt.text(this.prompt_GameOver);
                 //this.applyThemeClass(this.currentTheme.loseGameClass);
                 this.applyThemeImage(this.currentTheme.loseGameImage);
@@ -489,7 +515,7 @@ not$(document).ready(function() {
             },
 
             WinGame: function() {
-                this.currentGameState = HangmanState.gameOver;
+                this.currentGameState = GameState.gameOver;
                 this.score++;
                 this.updateScoreDisplay();
                 this.uiPrompt.text(this.prompt_WinGame);

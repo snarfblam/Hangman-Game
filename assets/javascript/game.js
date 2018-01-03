@@ -29,7 +29,7 @@
     */
 
 
-
+        
     /** Capture elements by "#ID" or ".className", or document/html elements
      * @param {string | Document | HTMLElement} selector 
      * @returns {notDollarObject}
@@ -679,24 +679,46 @@ not$(document).ready(function() {
 
         /** A list of theme independant words that can be used for the game. */
         genericWords: [
-            "transistor",
+            "split-screen",
             "cartridge",
             "processor",
             "extra life",
             "controller",
             "chiptune",
             "game over",
-            "graphics",
+            "title screen",
             "power-up",
             "Konami code",
-             "continue",
-             "password",
-             "cheat code",
-             "multiplayer",
-            // "backstory",
-             "high score",
-            // "speed run",
-            // "platformer",
+            "continue",
+            "password",
+            "cheat code",
+            "multiplayer",
+            "backstory",
+            "high score",
+            "speed run",
+            "platformer",
+            "adventure",
+            "role playing game",
+            "sound test",
+            "famicom",
+            "disk system",
+            "circuit board",
+            "bonus game",
+            "side scroller",
+            "gameplay",
+            "level boss",
+            "console",
+            "emulator",
+            "single player",
+            "directional pad",
+            "bad dude",
+            "experience",
+            "rail shooter",
+            "hitbox",
+            "invincibility",
+            "joystick",
+            "metroidvania",
+            "save point",
         ],
 
         /** A collection of themeType objects defining a number of themes (character sets with associated images and sounds) for the game. */
@@ -818,7 +840,11 @@ not$(document).ready(function() {
                     "compass",
                     "magic wand",
                     "candle",
-                    //"dungeon",
+                    "dungeon",
+                    "spectacle",
+                    "bracelet",
+                    "bubble",
+                    "magic sword",
                 ],
                 wordPool: [],
                 tweak: "",

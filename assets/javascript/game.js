@@ -9,6 +9,7 @@
         gameOver: "gameOver"
     };
 
+    /** Global object for hangman game */
     var HangmanGame;
 
 // --------------------------------------------------------------- 
@@ -75,7 +76,7 @@
         }
     }
 
-    /** Creates a new not$ object */
+    /** Constructor. Creates a new not$ object */
     not$.Not$Object = function(items){
         this.items = items;
     }
@@ -109,26 +110,29 @@
 
     /** Adds the specified class to element(s) if not already present */
     not$.Not$Object.prototype["addClass"] = function(a,b) {
+        // Use getOrSet for the apply-to-all-the-things logic
         return this.getOrSet(arguments, 
-            null,
-            function(e, newCls) {
-                var classesAdded = false;
+            null, // no getter
+            function(e, newCls) { // setter
+                var classesAdded = false; // Will be set to true if DOM needs to be updated
                 var currentClasses = e.getAttribute("class") || "";
                 var currentClassList = currentClasses.split(" ");
 
                 // Run the add-a-class logic for each of the spcified classes to be added
                 var newClassList = newCls.split(" ");
                 newClassList.forEach(function(cls) {
-                    // Check whether the element already has this class
-                    var containsCls = false;
-                    currentClassList.forEach(function(classListItem) { 
-                        if(classListItem == cls) containsCls = true;
-                    });
+                    if(cls) { // ignore blank strings
+                        // Check whether the element already has this class
+                        var containsCls = false;
+                        currentClassList.forEach(function(classListItem) { 
+                            if(classListItem == cls) containsCls = true;
+                        });
 
-                    // If not, add it to the list
-                    if(!containsCls) {
-                        currentClassList.push(cls);
-                        classesAdded = true;
+                        // If not, add it to the list
+                        if(!containsCls) {
+                            currentClassList.push(cls);
+                            classesAdded = true;
+                        }
                     }
                 });
 
@@ -142,21 +146,24 @@
 
     /** Adds the specified class to element(s) if not already present */
     not$.Not$Object.prototype["removeClass"] = function(a,b) {
+        // Use getOrSet for the apply-to-all-the-things logic
         return this.getOrSet(arguments, 
-            null,
-            function(e, remCls) {
-                var classesRemoved = false;
+            null, // no getter
+            function(e, remCls) { // setter
+                var classesRemoved = false; // Will be set to true if DOM needs to be updated
                 var currentClasses = e.getAttribute("class") || "";
                 var currentClassList = currentClasses.split(" ");
 
                 // Run our remove-a-class logic for each of the specified classes to be removed
                 var remClassList = remCls.split(" ");
                 remClassList.forEach(function(cls) {
-                    // If the element contains the class, yank it from the list
-                    var index = currentClassList.indexOf(cls);
-                    if(index >= 0) {
-                        currentClassList.splice(index, 1);
-                        classesRemoved = true;
+                    if(cls) { // ignore blank strings
+                        // If the element contains the class, yank it from the list
+                        var index = currentClassList.indexOf(cls);
+                        if(index >= 0) {
+                            currentClassList.splice(index, 1);
+                            classesRemoved = true;
+                        }
                     }
                 });
 
@@ -185,14 +192,19 @@
     */
     not$.Not$Object.prototype["getOrSet"] = function(args, getter, setter) {
         // Getter accepts 0 arguments, setter accepts 1 (value to be set)
-        if(args.length == 0){ 
+        if (args.length == 0){ 
+            // If getter is null, the invoked function only supports a setter, which requires a parameter.
+            if(getter == null) {
+                throw("Missing parameter.")
+            }
+
             // Can't get a value if there is nothing to get a value from.
             if(!this.items || this.items.length == 0)
             throw("It isn't a thing");
 
             // Run the getter on the first captured element
             return getter.call(this, this.items[0]);
-        }else if(args.length == 1 ){ 
+        } else if(args.length == 1 ){ 
             // Run setter logic on each captured element
             this.items.forEach(function(item) {
                 setter.call(this, item, args[0]);
@@ -206,17 +218,23 @@
 
     /** Defines getter/setter logic (getter(name), setter(name, value)) */
     not$.Not$Object.prototype["getOrSetWithName"] = function(args, getter, setter) {
-        if(args.length == 0){
+        // Getter accepts 1 argument (name of thing to get), setter accepts 2 (name of thing to set, value to be set)
+        if (args.length == 0) {
             // We need the name of the thing to get the value of
             throw("You did a bad. You didn't even specify one thing.");
         } else if (args.length == 1){ 
+            // If getter is null, the invoked function only supports a setter, which requires a parameter.
+            if(getter == null) {
+                throw("Missing parameter.")
+            }
+            
             // Can't get a value if there is nothing to get it from
             if(!this.items || this.items.length == 0)
                 throw("It isn't a thing");
 
             // Get value from first captured element
             return getter.call(this, this.items[0], args[0]);
-        }else if(args.length == 2 ){ // setter
+        } else if(args.length == 2 ){ // setter
             // Set value on each captured element
             this.items.forEach(function(item) {
                 setter.call(this, item, args[0], args[1]);
@@ -485,7 +503,7 @@ not$(document).ready(function() {
                 // Blaster Master theme needs an extra two pixels 
                 var meterTweak = 0;
                 if(this.currentTheme && this.currentTheme.tweak == "meter tweak") meterTweak = 2;
-                
+
                 this.uiHealthBar.attr("style", 
                     "width: " + (this.guessesLeft * this.heartWidth + meterTweak) + "px; " +
                     "height: " + this.heartHeight + "px; " +
@@ -493,19 +511,23 @@ not$(document).ready(function() {
                 );
             },
 
+            /** Updates the list of guessed letters */
             updateGuessDisplay: function() {
                 this.uiGuessDisplay.text(this.guessedLetters);
             }, 
 
+            /** Updates the displayed word */
             updateWordDisplay: function() {
                 this.uiWordDisplay.text(this.currentWord.displayWord);
                 this.uiHangman.attr("src", this.hangmanImages[this.guessesLeft]);
             },
 
+            /** Updates the score display */
             updateScoreDisplay: function() {
                 this.uiScoreDisplay.text(this.score);
             },
 
+            /** Updates UI for the game over state */
             GameOver: function() {
                 this.currentGameState = GameState.gameOver;
                 this.uiPrompt.text(this.prompt_GameOver);
@@ -514,6 +536,7 @@ not$(document).ready(function() {
                 this.sounds.play(this.currentTheme.loseSound);
             },
 
+            /** Updates UI for the win game state */
             WinGame: function() {
                 this.currentGameState = GameState.gameOver;
                 this.score++;
@@ -524,6 +547,7 @@ not$(document).ready(function() {
                 this.sounds.play(this.currentTheme.winSound);
             },
 
+            /** Assigns a randomly selected word to this.currentWord */
             selectRandomWord: function () {
                 // 50% chance of using theme-specific word
                 var useThemeWord = this.rnd(2) == 0;
@@ -534,10 +558,15 @@ not$(document).ready(function() {
                 this.currentWord.displayWord = this.makeDisplayWord(this.currentWord.fullWord);
             },
 
+            /** Substitutes underscores for and letters in the specified string */
             makeDisplayWord: function (word) {
                 return word.replace(this.regexMatchAllLetters, "_");
             },
 
+            /** Utility function that selects an item from the specified pool array, removes it from the array, and returns it. If the pool array is empty, it is repopulated by the source array and shuffled. 
+             *  @param {Array} poolArray - The list of items to choose from
+             *  @param {Array} sourceArray - The original complete list of items, used to refill the pool when necessary
+            */
             pullFromPool: function (poolArray, sourceArray) {
                 // Need to re-fill pool when it's empty
                 if(poolArray.length == 0) {
@@ -561,35 +590,17 @@ not$(document).ready(function() {
                 poolArray.splice(randIndex, 1);
                 return result;
             },
+
+            /** Selects a random theme and applies its initial styles to the UI. */
             selectRandomTheme: function () {
-                //var cur = this.currentTheme;
-
-                
-                // if(cur) {
-                //     var classList = cur.mainClass;
-                //     // Todo: append any other classes (winningClass, losingClass, etc?)
-                //     // Todo: is there an array.join? var classList = [cur.MainClass, cur.winningClass, etc].join(" ")
-                //     
-                //     this.uiPlayerPane.removeClass(classList);
-                // }
-
-                // if(this.themePool.length == 0) {
-                //     this.themePool = this.themePool.concat(this.themes);
-                //     this.randomize(this.themePool);
-                // }
-                //     
-                // 
-                // var randomThemeIndex = this.rnd(HangmanGame.themePool.length);
-                // this.currentTheme = this.themePool[randomThemeIndex];
-                // this.themePool.splice(randomThemeIndex, 1);
                 this.currentTheme = this.pullFromPool(this.themePool, this.themes);
 
                 this.removeThemeClasses();
                 this.applyThemeImage(this.currentTheme.mainImage);
             },
 
-            /**
-             *  @param {Array | {target: string, source: string}} img
+            /** Applies the spicified image information to the UI
+             *  @param {Array | {target: string, source: string}} img - Image info object or an array of image info objects. Each image info specifies the target name, and the source URL relative to the image path.
              */
             applyThemeImage: function(img) {
                 var that = this;
@@ -612,6 +623,10 @@ not$(document).ready(function() {
                     }
                 }
             },
+            /** (obsolete) Applies the specified class to the player pane element. The class will be removed
+             *  when the theme is changed.
+             *  @param {string} cls - Class to be applied
+             */
             applyThemeClass: function(cls) {
                 if(!cls) return;
 
@@ -624,6 +639,7 @@ not$(document).ready(function() {
                 }
             },
 
+            /** (obsolete) Removes all classes that have been applied via applyThemeClass. */
             removeThemeClasses: function(){
                 var classes = this.themeClassList.join(" ");
                 this.uiPlayerPane.removeClass(classes);
@@ -641,6 +657,9 @@ not$(document).ready(function() {
         // Assets
         // ---------------------
         
+        /** The list of images to be displayed in sequence for each incorrect guess */
+        // Some frames have been omitted to get a specific number of guesses that is suited to the
+        // used word list
         hangmanImages: [
             "assets/images/hangman-a.gif",
             "assets/images/hangman-b.gif",
@@ -658,9 +677,7 @@ not$(document).ready(function() {
             "assets/images/hangman-n.gif",
         ],
 
-        // Todo: make sure checking against letters is case-insensitive
-        // Case displayed to user should be based on case in word list, not
-        // on the case the user typed
+        /** A list of theme independant words that can be used for the game. */
         genericWords: [
             "transistor",
             "cartridge",
@@ -679,9 +696,10 @@ not$(document).ready(function() {
             // "backstory",
              "high score",
             // "speed run",
+            // "platformer",
         ],
 
-
+        /** A collection of themeType objects defining a number of themes (character sets with associated images and sounds) for the game. */
         themes: [
             { // Mario Theme
                  mainImage: [
@@ -704,7 +722,11 @@ not$(document).ready(function() {
                      "flower",
                      "warp zone",
                      "princess",
-                     //"castle",
+                     "fire ball",
+                     "toadstool",
+                     "castle",
+                     "question mark",
+                     "piranha plant",
                  ],
                  wordPool: [],
                  tweak: "",
@@ -728,10 +750,14 @@ not$(document).ready(function() {
                 wordList: [
                     "missile",
                     "energy tank",
-                    "pirate",
+                    "space pirate",
                     "secret world",
                     "time bomb",
-                    //"castle",
+                    "elevator",
+                    "mother brain",
+                    "federation",
+                    "parasite",
+                    "dragon"
                 ],
                 wordPool: [],
                 tweak: "",
@@ -749,7 +775,7 @@ not$(document).ready(function() {
                 losingSound: "blast_losing.mp3",
                 winGameImage: {target: "opponent", source: "avatarThing_win.gif"},
                 winSound: "blast_win.mp3",
-                loseGameImage: {target: "player", source: "avatarTank_die.gif"},
+                loseGameImage: {target: "player", source: "avatarTank_Die.gif"},
                 loseSound: "blast_lose.mp3",
                 wrongSound: "blast_wrong.mp3",
                 wordList: [
@@ -757,8 +783,12 @@ not$(document).ready(function() {
                     "plutonium",
                     "ribbit",
                     "underground",
-                    "thunder",
-                    //"castle",
+                    "thunder strike",  
+                    "homing missile",
+                    "jelly fish",
+                    "lobster",
+                    "radioactive",
+                    "epsilon",
                 ],
                 wordPool: [],
                 tweak: "meter tweak",
@@ -784,7 +814,7 @@ not$(document).ready(function() {
                 wrongSound: "zelda_wrong.mp3",
                 wordList: [
                     "triforce",
-                    "boomrang",
+                    "boomerang",
                     "compass",
                     "magic wand",
                     "candle",
@@ -795,29 +825,42 @@ not$(document).ready(function() {
             },
         ],
 
+        /** Initializes objects of the items in this.sounds[] */
         initSounds: function() {
             var that = this;
 
+            // First we're gonna set us up the functions. This is probably an ugly way to add functions
+            // to a namespace, but I've already written it and need to finish this tonight.
+
+            /** Plays the specified sound
+             *  @param {string} name - The filename of the sound to play.
+             *  @param {boolean} stopAll - If true, all currently playing sounds will be stopped.
+             */
             this.sounds.play = function(name, stopAll){
                 if(stopAll !== false) { // don't stop if parameter is omitted
                     that.sounds.stopAll();
                 }
 
+                // A theme may specify null for a sound it chooses not to provide
                 var data = that.sounds[name];
                 if(data.name == null) return;
 
+                // The sound property is a lazy-initialized HTMLAudioElement. We load it here if necessary.
                 if(data.sound) {
+                    // If for any reason the browser can't load or play the sound, we'll just skip it
                     var loaded = !isNaN(data.sound.duration);
                     if(loaded) {
                         data.sound.currentTime = 0;
                         data.sound.play();
                     }
                 } else {
+                    // Create the new HTMLAudioElement
                     data.sound = new Audio(data.url);
                     data.sound.play();
                 } 
             }
 
+            /** Stops all currently playing sounds */
             this.sounds.stopAll = function() {
                 that.sounds.forEach(function(snd) {
                     if(snd.sound) {
@@ -826,6 +869,7 @@ not$(document).ready(function() {
                 });
             }
 
+            // For each theme, take each sound and create an object to represend it in this.sounds
             this.themes.forEach(function(t) {
                 prepSound(t.winningSound);
                 prepSound(t.winSound);
@@ -834,6 +878,7 @@ not$(document).ready(function() {
                 prepSound(t.loseSound);
             });
 
+            /** Catalogs the specified sound. */
             function prepSound(path){
                 var fullishPath = that.soundsPath + path;
                 var soundData = {
